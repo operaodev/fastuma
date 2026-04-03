@@ -1,13 +1,11 @@
-#!/usr/bin/env bash
-# fastuma — install.sh
+#!/usr/bin/env fish
+# fastuma — install.fish
 # Instala la app y descarga los recursos de la API.
-# Usage: bash install.sh
+# Usage: fish install.fish
 
-set -euo pipefail
-
-APP_DIR="$HOME/.local/share/fastuma"
-BIN_DIR="$HOME/.local/bin"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+set APP_DIR "$HOME/.local/share/fastuma"
+set BIN_DIR "$HOME/.local/bin"
+set SCRIPT_DIR (realpath (status dirname))
 
 # ── banner ────────────────────────────────────────────────────
 echo ""
@@ -31,77 +29,80 @@ mkdir -p "$BIN_DIR"
 
 # ── BLOCK 2: copiar archivos ──────────────────────────────────
 echo "[FASTUMA] Installing files..."
-cp "$SCRIPT_DIR/fastuma.sh" "$APP_DIR/fastuma.sh"
-chmod +x "$APP_DIR/fastuma.sh"
+cp "$SCRIPT_DIR/fastuma.fish" "$APP_DIR/fastuma.fish"
+chmod +x "$APP_DIR/fastuma.fish"
 
-if [[ ! -f "$APP_DIR/fastuma.conf" ]]; then
+if not test -f "$APP_DIR/fastuma.conf"
     cp "$SCRIPT_DIR/fastuma.conf" "$APP_DIR/fastuma.conf"
     echo "[FASTUMA] Config installed → $APP_DIR/fastuma.conf"
 else
     echo "[FASTUMA] Config already exists — not overwritten."
-fi
+end
 
 # ── BLOCK 3: symlink ──────────────────────────────────────────
-ln -sf "$APP_DIR/fastuma.sh" "$BIN_DIR/fastuma"
+ln -sf "$APP_DIR/fastuma.fish" "$BIN_DIR/fastuma"
 echo "[FASTUMA] Symlink → $BIN_DIR/fastuma"
 
 # ── BLOCK 4: PATH check ───────────────────────────────────────
-if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
+if not contains "$BIN_DIR" $PATH
     echo ""
     echo "[FASTUMA] WARNING: $BIN_DIR is not in your PATH."
-    echo "          bash/zsh : export PATH=\"\$HOME/.local/bin:\$PATH\""
     echo "          fish     : fish_add_path ~/.local/bin"
-fi
+end
 
 # ── BLOCK 5: fetch API ────────────────────────────────────────
 echo ""
 echo "[FASTUMA] Fetching outfit list from API..."
 
-API_URL="https://umapyoi.net/api/v1/outfit"
-OUTPUT_JSON="$APP_DIR/uma_grouped.json"
-IMG_DIR="$APP_DIR/resource/outfit"
+set API_URL "https://umapyoi.net/api/v1/outfit"
+set OUTPUT_JSON "$APP_DIR/uma_grouped.json"
+set IMG_DIR "$APP_DIR/resource/outfit"
 
-DATA=$(curl -s "$API_URL")
-if [[ -z "$DATA" ]]; then
+set DATA (curl -s "$API_URL")
+if test -z "$DATA"
     echo "[ERROR] Could not reach API. Check your connection." >&2
     exit 1
-fi
+end
 
-TOTAL=$(echo "$DATA" | jq '[.[]] | length')
+set TOTAL (echo "$DATA" | jq '[.[]] | length')
 echo "[FASTUMA] Found $TOTAL entries. Downloading assets..."
 echo ""
 
 # ── BLOCK 6: descargar assets ─────────────────────────────────
-COUNT=0
-SKIPPED=0
-FAILED=0
+set COUNT 0
+set SKIPPED 0
+set FAILED 0
 
-[[ ! -f "$OUTPUT_JSON" ]] && echo "{}" > "$OUTPUT_JSON"
+if not test -f "$OUTPUT_JSON"
+    echo "{}" > "$OUTPUT_JSON"
+end
 
-while IFS= read -r item; do
-    chara_id=$(echo "$item" | jq -r '.chara_game_id')
-    outfit_id=$(echo "$item" | jq -r '.id')
-    gametora=$(echo "$item"  | jq -r '.gametora')
-    title=$(echo "$item"     | jq -r '.title')
-    name=$(echo "$gametora"  | cut -d'-' -f2- | tr '-' ' ')
+echo "$DATA" | jq -c '.[]' | while read -l item
+    set chara_id (echo "$item" | jq -r '.chara_game_id')
+    set outfit_id (echo "$item" | jq -r '.id')
+    set gametora (echo "$item"  | jq -r '.gametora')
+    set title (echo "$item"     | jq -r '.title')
+    
+    set name (string split '-' $gametora | tail -n +2 | string join ' ')
 
-    filename="${chara_id}-${outfit_id}.png"
-    filepath="$IMG_DIR/$filename"
-    img_url="https://gametora.com/images/umamusume/characters/chara_stand_${chara_id}_${outfit_id}.png"
+    set filename "$chara_id-$outfit_id.png"
+    set filepath "$IMG_DIR/$filename"
+    set img_url "https://gametora.com/images/umamusume/characters/chara_stand_"$chara_id"_"$outfit_id".png"
 
-    if [[ ! -f "$filepath" ]]; then
+    if not test -f "$filepath"
         curl -s -L -o "$filepath" "$img_url"
-        # verificar que sea un PNG real, no una página 404
-        if [[ ! -s "$filepath" ]] || ! file "$filepath" | grep -q "PNG"; then
+        
+        # ¡AQUÍ ESTABA EL BUG! Cambiamos a -rqi para que actúe como un grep buscando la subcadena
+        if not test -s "$filepath"; or not file "$filepath" | string match -rqi "png"
             echo "[WARNING] Image not found: $filename"
             rm -f "$filepath"
-            FAILED=$((FAILED + 1))
-        fi
+            set FAILED (math $FAILED + 1)
+        end
     else
-        SKIPPED=$((SKIPPED + 1))
-    fi
+        set SKIPPED (math $SKIPPED + 1)
+    end
 
-    COUNT=$((COUNT + 1))
+    set COUNT (math $COUNT + 1)
 
     jq \
       --arg  cid   "$chara_id"  \
@@ -118,11 +119,10 @@ while IFS= read -r item; do
     ' "$OUTPUT_JSON" > "$OUTPUT_JSON.tmp"
 
     mv "$OUTPUT_JSON.tmp" "$OUTPUT_JSON"
-
-done < <(echo "$DATA" | jq -c '.[]')
+end
 
 # ── BLOCK 7: done ─────────────────────────────────────────────
-DOWNLOADED=$((COUNT - SKIPPED - FAILED))
+set DOWNLOADED (math $COUNT - $SKIPPED - $FAILED)
 echo ""
 echo "[FASTUMA] ──────────────────────────────────────"
 echo "[FASTUMA] Done! $COUNT entries processed."
