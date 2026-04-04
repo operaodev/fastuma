@@ -1,11 +1,10 @@
 #!/usr/bin/env fish
 # fastuma — install.fish
-# Instala la app y descarga los recursos de la API.
+# Installs the app and downloads resources from the API.
 # Usage: fish install.fish
 
-set APP_DIR "$HOME/.local/share/fastuma"
+set APP_DIR (dirname (realpath (status filename)))
 set BIN_DIR "$HOME/.local/bin"
-set SCRIPT_DIR (realpath (status dirname))
 
 # ── banner ────────────────────────────────────────────────────
 echo ""
@@ -20,24 +19,16 @@ echo "  Asset Installer  •  v1.0"
 echo "  ──────────────────────────────────────────────────────────────"
 echo ""
 
-# ── BLOCK 1: crear directorios ────────────────────────────────
+# ── BLOCK 1: create directories ───────────────────────────────
 echo "[FASTUMA] Creating directories..."
 mkdir -p "$APP_DIR/resource/outfit"
 mkdir -p "$APP_DIR/resource/card"
 mkdir -p "$APP_DIR/resource/icon"
 mkdir -p "$BIN_DIR"
 
-# ── BLOCK 2: copiar archivos ──────────────────────────────────
-echo "[FASTUMA] Installing files..."
-cp "$SCRIPT_DIR/fastuma.fish" "$APP_DIR/fastuma.fish"
+# ── BLOCK 2: permissions ──────────────────────────────────────
+echo "[FASTUMA] Setting permissions..."
 chmod +x "$APP_DIR/fastuma.fish"
-
-if not test -f "$APP_DIR/fastuma.conf"
-    cp "$SCRIPT_DIR/fastuma.conf" "$APP_DIR/fastuma.conf"
-    echo "[FASTUMA] Config installed → $APP_DIR/fastuma.conf"
-else
-    echo "[FASTUMA] Config already exists — not overwritten."
-end
 
 # ── BLOCK 3: symlink ──────────────────────────────────────────
 ln -sf "$APP_DIR/fastuma.fish" "$BIN_DIR/fastuma"
@@ -68,7 +59,7 @@ set TOTAL (echo "$DATA" | jq '[.[]] | length')
 echo "[FASTUMA] Found $TOTAL entries. Downloading assets..."
 echo ""
 
-# ── BLOCK 6: descargar assets ─────────────────────────────────
+# ── BLOCK 6: download assets ──────────────────────────────────
 set COUNT 0
 set SKIPPED 0
 set FAILED 0
@@ -92,7 +83,7 @@ echo "$DATA" | jq -c '.[]' | while read -l item
     if not test -f "$filepath"
         curl -s -L -o "$filepath" "$img_url"
         
-        # ¡AQUÍ ESTABA EL BUG! Cambiamos a -rqi para que actúe como un grep buscando la subcadena
+        # Bug fix: changed to -rqi to act like a grep searching for substring
         if not test -s "$filepath"; or not file "$filepath" | string match -rqi "png"
             echo "[WARNING] Image not found: $filename"
             rm -f "$filepath"
@@ -134,4 +125,4 @@ echo "[FASTUMA] Images     → $IMG_DIR"
 echo "[FASTUMA] ──────────────────────────────────────"
 echo ""
 echo "  Run: fastuma"
-echo ""
+echo ""2

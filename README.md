@@ -47,9 +47,9 @@ fish install.fish
 
 The installer will:
 
-* Create `~/.local/share/fastuma/` with the resource directories
-* Copy `fastuma.fish` and `fastuma.conf` there
-* Create a symlink at `~/.local/bin/fastuma`
+* Create resource directories locally
+* Set execute permissions for `fastuma.fish`
+* Create a symlink at `~/.local/bin/fastuma` pointing to your cloned folder
 * Download all outfit images from the API
 
 Then just run:
@@ -66,7 +66,7 @@ fish_add_path ~/.local/bin
 
 ## Configuration
 
-Edit `~/.local/share/fastuma/fastuma.conf`:
+Edit `fastuma.conf` in your local directory:
 
 | Key | Default | Description |
 | :--- | :--- | :--- |
@@ -75,13 +75,23 @@ Edit `~/.local/share/fastuma/fastuma.conf`:
 | `RANDOM_OUTFIT` | `"true"` | Pick a random outfit for the character |
 | `FIXED_CHARA_ID` | `""` | Character ID to use when `RANDOM_CHARA="false"` |
 | `FIXED_OUTFIT_INDEX` | `"0"` | Outfit index to use when `RANDOM_OUTFIT="false"` (0 = classic, 1, 2... = alternates) |
+| `SEPARATOR` | `" - "` | Separator between character and outfit title |
+| `NAME_CASE` | `"upper"` | Case style for character: `upper` · `lower` · `capitalize` |
+| `NAME_PREFIX` | `""` | Optional string to prepend to character name |
+| `NAME_SUFFIX` | `""` | Optional string to append to character name |
+| `RESOURCE_NAME_CASE` | `"upper"` | Case style for outfit: `upper` · `lower` · `capitalize` |
+| `RESOURCE_NAME_PREFIX` | `""` | Optional string to prepend to outfit name |
+| `RESOURCE_NAME_SUFFIX` | `""` | Optional string to append to outfit name |
+| `RESOURCE_NAME_DECORATION` | `"true"` | Keep original decorative brackets from API (e.g. `[Miracle Author]`) |
+| `NAME_COLOR` | `""` | ANSI color number for character (e.g., `32` for Green) |
+| `RESOURCE_NAME_COLOR` | `""` | ANSI color number for outfit |
 | `FASTFETCH_CONFIG` | `"~/.config/fastfetch/config.jsonc"` | Your fastfetch base config |
 | `IMAGE_PROTOCOL` | `"kitty"` | `kitty` · `sixel` · `iterm2` · `chafa` |
 
 ## File layout
 
 ```text
-~/.local/share/fastuma/
+fastuma/ (clone directory)
 ├── fastuma.fish          ← main script
 ├── fastuma.conf          ← your config
 ├── uma_grouped.json      ← character + outfit index (generated)
@@ -109,7 +119,7 @@ fastuma
 To completely remove Fastuma and its assets from your system:
 
 ```fish
-rm -rf ~/.local/share/fastuma
+rm -rf /path/to/cloned/fastuma
 rm ~/.local/bin/fastuma
 ```
 
