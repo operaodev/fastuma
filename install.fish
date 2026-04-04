@@ -125,4 +125,4 @@ echo "[FASTUMA] Images     → $IMG_DIR"
 echo "[FASTUMA] ──────────────────────────────────────"
 echo ""
 echo "  Run: fastuma"
-echo ""2
+echo ""

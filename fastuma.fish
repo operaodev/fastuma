@@ -26,6 +26,7 @@ set SEPARATOR                " - "
 set NAME_CASE                "upper"
 set RESOURCE_NAME_CASE       "upper"
 set RESOURCE_NAME_DECORATION "true"
+set COLOR_DYNAMIC            "false"
 set NAME_PREFIX              ""
 set NAME_SUFFIX              ""
 set RESOURCE_NAME_PREFIX     ""
@@ -60,6 +61,7 @@ cat $CONF_FILE | while read -l line
         case NAME_CASE;                 set NAME_CASE "$val"
         case RESOURCE_NAME_CASE;        set RESOURCE_NAME_CASE "$val"
         case RESOURCE_NAME_DECORATION;  set RESOURCE_NAME_DECORATION "$val"
+        case COLOR_DYNAMIC;             set COLOR_DYNAMIC "$val"
         case NAME_PREFIX;               set NAME_PREFIX "$val"
         case NAME_SUFFIX;               set NAME_SUFFIX "$val"
         case RESOURCE_NAME_PREFIX;      set RESOURCE_NAME_PREFIX "$val"
@@ -129,6 +131,25 @@ if not test -f "$IMAGE_PATH"
 end
 
 # ── build title ───────────────────────────────────────────────
+
+if test "$COLOR_DYNAMIC" = "true"
+    # Scans the image for the most prominent colors, ignores transparent ones (#...00)
+    # and sorts them by luminance (brightness)
+    set -l extracted (magick "$IMAGE_PATH" -scale 50x50 -colors 5 -unique-colors txt: | awk -F'[(), ]+' 'NR>1 {if($6~/^#/){hex=$6;a=255}else{hex=$7;a=$6}; if(a>200){print 0.299*$3+0.587*$4+0.114*$5, substr(hex,1,7)}}' | sort -n | awk '{print $2}')
+    
+    # If at least 2 colors were detected, assign them
+    if test (count $extracted) -ge 2
+        # The lightest color for the name
+        set NAME_COLOR $extracted[-1]
+        
+        # To avoid colors that are too dark (e.g. shadows/outlines), take the 2nd lightest
+        if test (count $extracted) -ge 3
+            set RESOURCE_NAME_COLOR $extracted[-2]
+        else
+            set RESOURCE_NAME_COLOR $extracted[1]
+        end
+    end
+end
 
 if test "$RESOURCE_NAME_DECORATION" = "false"
     set OUTFIT_TITLE (string replace -a '[' '' "$OUTFIT_TITLE" | string replace -a ']' '')

@@ -40,7 +40,7 @@ Assets are downloaded once from umapyoi.net and gametora.com and stored locally.
 Clone anywhere and run the installer:
 
 ```fish
-git clone [https://github.com/operaodev/fastuma.git](https://github.com/operaodev/fastuma.git)
+git clone https://github.com/operaodev/fastuma.git
 cd fastuma
 fish install.fish
 ```
@@ -83,6 +83,7 @@ Edit `fastuma.conf` in your local directory:
 | `RESOURCE_NAME_PREFIX` | `""` | Optional string to prepend to outfit name |
 | `RESOURCE_NAME_SUFFIX` | `""` | Optional string to append to outfit name |
 | `RESOURCE_NAME_DECORATION` | `"true"` | Keep original decorative brackets from API (e.g. `[Miracle Author]`) |
+| `COLOR_DYNAMIC` | `"false"` | Dynamically extract colors from the character image using ImageMagick |
 | `NAME_COLOR` | `""` | ANSI color number for character (e.g., `32` for Green) |
 | `RESOURCE_NAME_COLOR` | `""` | ANSI color number for outfit |
 | `FASTFETCH_CONFIG` | `"~/.config/fastfetch/config.jsonc"` | Your fastfetch base config |
