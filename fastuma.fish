@@ -193,10 +193,9 @@ set TITLE "$title_name$SEPARATOR$title_outfit"
 cp $FF_CONFIG $TMP
 
 # Optimized sed replacement that avoids Fish line break bugs
-sed -i "s|\"source\":[ ]*\"[^\"]*\"|\"source\": \"$IMAGE_PATH\"|" $TMP
 sed -i '/\/\/ fastuma-title/d' $TMP
 sed -i "s|^\([[:space:]]*\"modules\"[[:space:]]*:[[:space:]]*\[\)|\1\n        { \"type\": \"custom\", \"format\": \"$TITLE\" }, // fastuma-title|" $TMP
 
 # ── run ───────────────────────────────────────────────────────
-fastfetch --config $TMP
+fastfetch --config $TMP --logo "$IMAGE_PATH" --logo-type "$IMAGE_PROTOCOL"
 rm -f $TMP
